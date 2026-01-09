@@ -1,11 +1,21 @@
-#include "fc.h"
+#include "config.h"
 
-int main(void)
-{
-    FC_Init();
+void setup() {
+    initPins();
+    imuInit();
+    rcInit();
+    gpsInit();
+    compassInit();
+    ekfInit();
+    outputInit();
+}
 
-    while (1)
-    {
-        FC_Loop();
-    }
+void loop() {
+    rcUpdate();
+    imuUpdate();
+    ekfUpdate();
+    navigationUpdate();
+    failsafeUpdate();
+    mixerUpdate();
+    outputUpdate();
 }

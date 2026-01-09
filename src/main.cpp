@@ -1,21 +1,7 @@
-#include "config.h"
+int main() {
+    setup();
 
-void setup() {
-    initPins();
-    imuInit();
-    rcInit();
-    gpsInit();
-    compassInit();
-    ekfInit();
-    outputInit();
-}
-
-void loop() {
-    rcUpdate();
-    imuUpdate();
-    ekfUpdate();
-    navigationUpdate();
-    failsafeUpdate();
-    mixerUpdate();
-    outputUpdate();
+    while(1) {
+        loop();
+    }
 }

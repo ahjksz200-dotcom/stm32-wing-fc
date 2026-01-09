@@ -1,5 +1,5 @@
 #include "imu.h"
-#include "i2c.h"
+#include "stm32f4xx_hal.h"
 
 static float ax, ay, az;
 static float gx, gy, gz;

@@ -1,26 +1,25 @@
 #include "ekf.h"
 
-static float roll, pitch, yaw;
+static ekf_state_t ekf;
 
-void ekfInit() {
-    roll = pitch = yaw = 0;
+void EKF_Init(void)
+{
+    ekf.roll  = 0.0f;
+    ekf.pitch = 0.0f;
+    ekf.yaw   = 0.0f;
 }
 
-void ekfUpdate() {
-    float acc[3], gyro[3];
-    imuGet(acc, gyro);
-
-    float dt = 0.001f;
-
-    roll  += gyro[0]*dt;
-    pitch += gyro[1]*dt;
-    yaw   += gyro[2]*dt;
-
-    // correction nhẹ bằng acc
-    roll  = roll  * 0.99f + atan2(acc[1], acc[2]) * 0.57f;
-    pitch = pitch * 0.99f + atan2(-acc[0], acc[2]) * 0.57f;
+void EKF_Update(float gx, float gy, float gz,
+                float ax, float ay, float az,
+                float dt)
+{
+    // EKF placeholder → gyro integrate
+    ekf.roll  += gx * dt;
+    ekf.pitch += gy * dt;
+    ekf.yaw   += gz * dt;
 }
 
-void ekfGetAttitude(float* r, float* p, float* y) {
-    *r=roll; *p=pitch; *y=yaw;
+ekf_state_t EKF_GetState(void)
+{
+    return ekf;
 }

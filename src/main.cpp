@@ -1,7 +1,16 @@
-int main() {
-    setup();
+#include "fc.h"
+#include "pwm.h"
 
-    while(1) {
-        loop();
+int main(void)
+{
+    HAL_Init();
+
+    FC_Init();
+    PWM_Init();
+    PWM_ArmESC();
+
+    while (1)
+    {
+        FC_Loop();   // đọc IMU → PID → mixer → PWM
     }
 }

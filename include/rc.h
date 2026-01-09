@@ -2,9 +2,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define RC_CH 8
+typedef struct {
+    float roll;
+    float pitch;
+    float yaw;
+    float throttle;
+    bool  failsafe;
+} rc_input_t;
 
-void rc_init(void);
-void rc_update(void);
-uint16_t rc_read(uint8_t ch);
-bool rc_lost(void);
+void RC_Init(void);
+bool RC_Read(rc_input_t *rc);

@@ -1,12 +1,14 @@
 #pragma once
 
-typedef struct {
-    float kp;
-    float ki;
-    float kd;
-    float i;
-    float prev;
-} pid_t;
+typedef enum {
+    PID_ROLL,
+    PID_PITCH,
+    PID_YAW
+} pid_axis_t;
 
-void pid_init(pid_t* p, float kp, float ki, float kd);
-float pid_update(pid_t* p, float sp, float mea, float dt);
+void PID_Init(void);
+
+float PID_Update(pid_axis_t axis,
+                 float setpoint,
+                 float measurement,
+                 float dt);

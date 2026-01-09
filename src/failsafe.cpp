@@ -1,24 +1,7 @@
 #include "failsafe.h"
 
-static failsafe_state_t fs;
+static bool fs = false;
 
-void Failsafe_Init(void)
-{
-    fs.rc_lost  = false;
-    fs.gps_lost = false;
-    fs.active   = false;
-}
-
-void Failsafe_Update(bool rc_ok, bool gps_ok)
-{
-    fs.rc_lost  = !rc_ok;
-    fs.gps_lost = !gps_ok;
-
-    // failsafe kích hoạt nếu mất RC
-    fs.active = fs.rc_lost;
-}
-
-failsafe_state_t Failsafe_GetState(void)
-{
-    return fs;
-}
+void FAILSAFE_Init(void) { fs = false; }
+void FAILSAFE_Trigger(void) { fs = true; }
+bool FAILSAFE_IsActive(void) { return fs; }

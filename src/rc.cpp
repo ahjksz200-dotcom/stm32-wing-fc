@@ -1,15 +1,12 @@
 #include "rc.h"
 
-static int16_t ch[8];
+void RC_Init(void) {}
 
-void rcInit() {
-    uartInitMBUS();
-}
-
-void rcUpdate() {
-    mbusRead(ch);
-}
-
-int16_t rcGet(uint8_t c) {
-    return ch[c];
+bool RC_Read(rc_input_t *rc) {
+    rc->roll = 0;
+    rc->pitch = 0;
+    rc->yaw = 0;
+    rc->throttle = 0;
+    rc->failsafe = false;
+    return true;
 }

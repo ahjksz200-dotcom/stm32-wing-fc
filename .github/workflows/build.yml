@@ -1,7 +1,8 @@
-name: Build STM32 FC
+name: STM32 FC Build (Verbose Debug)
 
 on:
   push:
+    branches: [ main ]
   pull_request:
 
 jobs:
@@ -9,24 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.x'
+        python-version: '3.11'
 
     - name: Install PlatformIO
       run: |
-        pip install platformio
+        python -m pip install --upgrade pip
+        pip install -U platformio
 
-    - name: Build firmware
+    - name: Show PlatformIO info
       run: |
-        pio run
+        pio --version
+        pio system info
 
-    - name: Upload firmware artifact
+    - name: Build firmware (FULL VERBOSE)
+      run: |
+        pio run -e stm32f401rc -v
+
+    - name: Upload firmware binary
+      if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: FC_STM32F401_BIN
-        path: .pio/build/stm32f401rc/firmware.bin
+        name: stm32-wing-fc-bin
+        path: .pio/build/stm32f401rc/*.bin

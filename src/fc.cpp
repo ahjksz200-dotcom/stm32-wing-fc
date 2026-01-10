@@ -90,7 +90,12 @@ void FC_Loop(void)
     );
 
     /* -------- Output -------- */
-PWM_SetESC(rc.throttle);
+// Disarm khi failsafe
+PWM_DisarmESC();
 
-PWM_SetMotor(0, mix.left);   // hoặc Servo
-PWM_SetMotor(1, mix.right);
+// ESC (CH1)
+PWM_SetMicroseconds(PWM_CH1, rc.throttle);
+
+// Elevon
+PWM_SetMicroseconds(PWM_CH2, mix.left);
+PWM_SetMicroseconds(PWM_CH3, mix.right);

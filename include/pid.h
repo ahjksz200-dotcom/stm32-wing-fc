@@ -1,14 +1,13 @@
 #pragma once
+#include "imu.h"
+#include "rc_mbus.h"
 
-typedef enum {
-    PID_ROLL,
-    PID_PITCH,
-    PID_YAW
-} pid_axis_t;
+typedef struct {
+    int16_t roll;
+    int16_t pitch;
+} pid_output_t;
 
 void PID_Init(void);
-
-float PID_Update(pid_axis_t axis,
-                 float setpoint,
-                 float measurement,
-                 float dt);
+void PID_Update(const imu_data_t *imu,
+                const rc_data_t *rc,
+                pid_output_t *out);

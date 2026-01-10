@@ -1,34 +1,22 @@
 #include "fc.h"
 
 #include "rc_mbus.h"
-#include "failsafe.h"
 #include "imu.h"
 #include "pid.h"
 #include "pwm.h"
+#include "failsafe.h"
+#include "mixer.h"
 
-/* ===== INTERNAL STATE ===== */
-static bool armed = false;
+static uint8_t armed = 0;
 
-/* ===== MIXER ===== */
-static void mix_elevon(int16_t roll, int16_t pitch)
-{
-    int16_t left  = PWM_MID_US + pitch + roll;
-    int16_t right = PWM_MID_US + pitch - roll;
-
-    PWM_SetMicroseconds(PWM_CH2, left);
-    PWM_SetMicroseconds(PWM_CH3, right);
-}
-
-/* ===== INIT ===== */
 void FC_Init(void)
 {
+    RC_Init();
     IMU_Init();
     PID_Init();
     PWM_Init();
-    PWM_DisarmESC();
 }
 
-/* ===== MAIN LOOP ===== */
 void FC_Loop(void)
 {
     rc_data_t rc;
@@ -40,28 +28,24 @@ void FC_Loop(void)
 
     if (failsafe_active()) {
         PWM_DisarmESC();
-        armed = false;
+        armed = 0;
         return;
     }
 
     if (rc.arm && !armed) {
         PWM_ArmESC();
-        armed = true;
+        armed = 1;
     }
 
     if (!rc.arm && armed) {
         PWM_DisarmESC();
-        armed = false;
+        armed = 0;
     }
 
     if (!armed) return;
 
-    imu_data_t imu;
-    IMU_Read(&imu);
+    IMU_Update();
+    PID_Update(rc.roll, rc.pitch);
 
-    pid_output_t pid;
-    PID_Update(&imu, &rc, &pid);
-
-    mix_elevon(pid.roll, pid.pitch);
-    PWM_SetMicroseconds(PWM_CH1, rc.throttle);
+    mix_elevon(rc.roll, rc.pitch);
 }

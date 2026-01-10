@@ -51,7 +51,7 @@ void FC_Loop(void)
     }
 
     if (FAILSAFE_IsActive() || rc.failsafe) {
-        PWM_Disarm();
+        PWM_DisarmESC();
         return;
     }
 
@@ -90,7 +90,7 @@ void FC_Loop(void)
     );
 
     /* -------- Output -------- */
-    PWM_SetThrottle(rc.throttle);
-    PWM_SetServo(0, mix.left);   // Left elevon
-    PWM_SetServo(1, mix.right);  // Right elevon
-}
+PWM_SetESC(rc.throttle);
+
+PWM_SetMotor(0, mix.left);   // hoặc Servo
+PWM_SetMotor(1, mix.right);

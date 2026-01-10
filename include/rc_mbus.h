@@ -1,12 +1,21 @@
 #pragma once
 #include "stm32f4xx_hal.h"
-#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     int16_t roll;
     int16_t pitch;
+    int16_t yaw;
     int16_t throttle;
-    bool arm;
+    uint8_t arm;
 } rc_data_t;
 
-bool RC_Read(rc_data_t *rc);
+void RC_Init(void);
+uint8_t RC_Read(rc_data_t *out);
+
+#ifdef __cplusplus
+}
+#endif

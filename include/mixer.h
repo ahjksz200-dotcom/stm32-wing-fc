@@ -1,11 +1,12 @@
 #pragma once
+#include "stm32f4xx_hal.h"
 
-typedef struct {
-    float left;
-    float right;
-} mixer_output_t;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void Mixer_Elevon(float throttle,
-                  float roll,
-                  float pitch,
-                  mixer_output_t *out);
+void mix_elevon(int16_t roll, int16_t pitch);
+
+#ifdef __cplusplus
+}
+#endif

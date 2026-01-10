@@ -1,101 +1,81 @@
 #include "fc.h"
-
-/* Core modules */
-#include "imu.h"
-#include "pid.h"
-#include "rc.h"
-#include "mixer.h"
-#include "failsafe.h"
 #include "pwm.h"
+#include "rc_mbus.h"
+#include "failsafe.h"
+#include "filter.h"
+#include "ekf.h"
+#include <string.h>
 
-/* ================== Local state ================== */
+/* ===== INTERNAL STATE ===== */
+static bool armed = false;
 
-static imu_data_t imu;
-static rc_input_t rc;
+/* ===== MIXER (WING) ===== */
+typedef struct {
+    int16_t left;
+    int16_t right;
+} mix_t;
 
-static float pid_roll  = 0.0f;
-static float pid_pitch = 0.0f;
-static float pid_yaw   = 0.0f;
+static mix_t mix;
 
-/* loop timing (1kHz default) */
-static uint32_t last_loop_us = 0;
-#define FC_LOOP_US 1000   // 1 kHz
-
-/* ================== Init ================== */
-
-void FC_Init(void)
+/* ===== SIMPLE MIXER ===== */
+static void mix_elevon(int16_t roll, int16_t pitch)
 {
-    IMU_Init();
-    PID_Init();
-    RC_Init();
-    PWM_Init();
-    FAILSAFE_Init();
+    mix.left  = PWM_MID_US + pitch + roll;
+    mix.right = PWM_MID_US + pitch - roll;
 
-    last_loop_us = 0;
+    if (mix.left < PWM_MIN_US)  mix.left = PWM_MIN_US;
+    if (mix.left > PWM_MAX_US)  mix.left = PWM_MAX_US;
+    if (mix.right < PWM_MIN_US) mix.right = PWM_MIN_US;
+    if (mix.right > PWM_MAX_US) mix.right = PWM_MAX_US;
 }
 
-/* ================== Main FC loop ================== */
+/* ===== FC INIT ===== */
+void FC_Init(void)
+{
+    PWM_Init();
+    PWM_DisarmESC();
+    armed = false;
+}
 
+/* ===== FC LOOP ===== */
 void FC_Loop(void)
 {
-    uint32_t now = HAL_GetTick() * 1000; // us (coarse but OK now)
-    if ((now - last_loop_us) < FC_LOOP_US) {
+    rc_data_t rc;
+
+    /* ---- Read RC ---- */
+    if (!RC_Read(&rc)) {
+        failsafe_trigger();
+    }
+
+    /* ---- Failsafe ---- */
+    if (failsafe_active()) {
+        PWM_DisarmESC();
+        armed = false;
         return;
     }
-    float dt = (now - last_loop_us) * 1e-6f;
-    last_loop_us = now;
 
-    /* -------- RC -------- */
-    if (!RC_Read(&rc)) {
-        FAILSAFE_Trigger();
+    /* ---- Arm logic ---- */
+    if (rc.arm && !armed) {
+        PWM_ArmESC();
+        armed = true;
     }
 
-    if (FAILSAFE_IsActive() || rc.failsafe) {
+    if (!rc.arm && armed) {
+        PWM_DisarmESC();
+        armed = false;
+        return;
+    }
+
+    if (!armed) {
         PWM_DisarmESC();
         return;
     }
 
-    /* -------- IMU -------- */
-    IMU_Update(&imu);
+    /* ---- MIX ---- */
+    mix_elevon(rc.roll, rc.pitch);
 
-    /* -------- PID -------- */
-    pid_roll = PID_Update(
-        PID_ROLL,
-        rc.roll,
-        imu.gyro_x,
-        dt
-    );
-
-    pid_pitch = PID_Update(
-        PID_PITCH,
-        rc.pitch,
-        imu.gyro_y,
-        dt
-    );
-
-    pid_yaw = PID_Update(
-        PID_YAW,
-        rc.yaw,
-        imu.gyro_z,
-        dt
-    );
-
-    /* -------- Mixer (Elevon) -------- */
-    mixer_output_t mix;
-    Mixer_Elevon(
-        rc.throttle,
-        pid_roll,
-        pid_pitch,
-        &mix
-    );
-
-    /* -------- Output -------- */
-// Disarm khi failsafe
-PWM_DisarmESC();
-
-// ESC (CH1)
-PWM_SetMicroseconds(PWM_CH1, rc.throttle);
-
-// Elevon
-PWM_SetMicroseconds(PWM_CH2, mix.left);
-PWM_SetMicroseconds(PWM_CH3, mix.right);
+    /* ---- OUTPUT ---- */
+    PWM_SetMicroseconds(PWM_CH1, rc.throttle); // ESC
+    PWM_SetMicroseconds(PWM_CH2, mix.left);    // Elevon Left
+    PWM_SetMicroseconds(PWM_CH3, mix.right);   // Elevon Right
+}

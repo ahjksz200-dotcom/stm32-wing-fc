@@ -1,36 +1,51 @@
 #include "pwm.h"
+#include "stm32f4xx_hal.h"
 
-/* Stub TIM handle (đủ để compile) */
-TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim3;
 
-static uint16_t pwm_value[PWM_CH_TOTAL];
+static uint32_t pwm_channel_map[PWM_CH_MAX] = {
+    TIM_CHANNEL_1, // ESC
+    TIM_CHANNEL_2, // Servo L
+    TIM_CHANNEL_3  // Servo R
+};
+
+static inline uint32_t us_to_ccr(uint16_t us)
+{
+    // TIM chạy 1 MHz → 1us = 1 count
+    return us;
+}
 
 void PWM_Init(void)
 {
-    for (int i = 0; i < PWM_CH_TOTAL; i++) {
-        pwm_value[i] = PWM_MIN_US;
-    }
-}
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 
-void PWM_SetMicroseconds(pwm_channel_t ch, uint16_t us)
-{
-    if (ch >= PWM_CH_TOTAL) return;
-
-    if (us < PWM_MIN_US) us = PWM_MIN_US;
-    if (us > PWM_MAX_US) us = PWM_MAX_US;
-
-    pwm_value[ch] = us;
-
-    /* TODO: map TIM channel thật sau */
-    /* __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_x, us); */
+    PWM_DisarmESC();
 }
 
 void PWM_ArmESC(void)
 {
-    PWM_SetMicroseconds(PWM_CH1, PWM_MIN_US);
+    PWM_Write(PWM_ESC, PWM_MIN_US);
 }
 
 void PWM_DisarmESC(void)
 {
-    PWM_SetMicroseconds(PWM_CH1, PWM_MIN_US);
+    PWM_Write(PWM_ESC, PWM_MIN_US);
+    PWM_Write(PWM_SERVO_L, 1500);
+    PWM_Write(PWM_SERVO_R, 1500);
+}
+
+void PWM_Write(pwm_ch_t ch, uint16_t us)
+{
+    if (ch >= PWM_CH_MAX) return;
+
+    if (us < PWM_MIN_US) us = PWM_MIN_US;
+    if (us > PWM_MAX_US) us = PWM_MAX_US;
+
+    __HAL_TIM_SET_COMPARE(
+        &htim3,
+        pwm_channel_map[ch],
+        us_to_ccr(us)
+    );
 }

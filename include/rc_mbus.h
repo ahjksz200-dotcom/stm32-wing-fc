@@ -1,21 +1,5 @@
 #pragma once
-#include "stm32f4xx_hal.h"
+#include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct {
-    int16_t roll;
-    int16_t pitch;
-    int16_t yaw;
-    int16_t throttle;
-    uint8_t arm;
-} rc_data_t;
-
-void RC_Init(void);
-uint8_t RC_Read(rc_data_t *out);
-
-#ifdef __cplusplus
-}
-#endif
+void MBUS_Init(void);
+uint8_t MBUS_ReadRaw(uint16_t *channels);

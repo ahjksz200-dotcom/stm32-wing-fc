@@ -2,23 +2,27 @@
 
 static mbus_t mbus;
 
-void mbus_init(void) {
+void MBUS_Init(void)
+{
     for (int i = 0; i < MBUS_CHANNELS; i++) {
         mbus.ch[i] = 1500;
     }
     mbus.failsafe = false;
-    mbus.frame_lost = false;
 }
 
-void mbus_update(void) {
-    // TODO: decode MBUS/iBUS/SBUS thật
+uint8_t MBUS_ReadRaw(uint16_t *channels)
+{
+    // TODO: đọc UART SBUS / iBUS / CRSF sau
+    // TẠM THỜI: giả lập để build FC
+
+    for (int i = 0; i < MBUS_CHANNELS; i++) {
+        channels[i] = mbus.ch[i];
+    }
+
+    return mbus.failsafe ? 0 : 1;
 }
 
-uint16_t mbus_get_channel(uint8_t ch) {
-    if (ch >= MBUS_CHANNELS) return 1500;
-    return mbus.ch[ch];
-}
-
-bool mbus_failsafe(void) {
+bool MBUS_Failsafe(void)
+{
     return mbus.failsafe;
 }

@@ -6,8 +6,6 @@ int main(void)
     HAL_Init();
 
     FC_Init();
-    PWM_Init();
-    PWM_ArmESC();
 
     while (1)
     {

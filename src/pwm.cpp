@@ -1,87 +1,87 @@
 #include "pwm.h"
 #include "stm32f4xx_hal.h"
 
-/*
- * TIM3 dùng làm PWM output
- * - CH1: ESC (Throttle)
- * - CH2: Servo Left
- * - CH3: Servo Right
- * - CH4: Dự phòng
- *
- * Giả sử:
- *  TIM3 prescaler + period đã set để:
- *  1 tick = 1 us
- *  ARR = 20000 (20ms / 50Hz)
- */
-
+/* =========================================================
+   Timer handle
+   → PHẢI được define ở timer_pwm.cpp hoặc main.c
+   ========================================================= */
 extern TIM_HandleTypeDef htim3;
 
-/* ===== CONFIG ===== */
-#define PWM_MIN_US     900
-#define PWM_MAX_US     2100
-#define ESC_ARM_US     1000
-#define ESC_DISARM_US  900
-
-/* ===== INTERNAL ===== */
-static inline uint16_t constrain_us(uint16_t us)
-{
-    if (us < PWM_MIN_US) return PWM_MIN_US;
-    if (us > PWM_MAX_US) return PWM_MAX_US;
-    return us;
-}
-
-/* ===== API ===== */
-
-void PWM_Init(void)
-{
-    /* Start PWM channels */
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-
-    /* Safe output */
-    PWM_DisarmESC();
-    PWM_SetMicroseconds(PWM_CH2, 1500);
-    PWM_SetMicroseconds(PWM_CH3, 1500);
-}
-
+/* =========================================================
+   Low-level PWM write (timer channel)
+   ========================================================= */
 void PWM_SetMicroseconds(pwm_ch_t ch, uint16_t us)
 {
-    us = constrain_us(us);
+    if (us < 900)  us = 900;
+    if (us > 2100) us = 2100;
 
     switch (ch)
     {
         case PWM_CH1:
             __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, us);
             break;
-
         case PWM_CH2:
             __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, us);
             break;
-
         case PWM_CH3:
             __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, us);
             break;
-
         case PWM_CH4:
             __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, us);
             break;
-
         default:
             break;
     }
 }
 
-/* ===== ESC CONTROL ===== */
+/* =========================================================
+   Logical channel → timer channel mapping
+   ========================================================= */
+static pwm_ch_t pwm_map(pwm_channel_t ch)
+{
+    switch (ch)
+    {
+        case PWM_ESC:     return PWM_CH1;
+        case PWM_SERVO_L: return PWM_CH2;
+        case PWM_SERVO_R: return PWM_CH3;
+        case PWM_AUX1:    return PWM_CH4;
+        default:          return PWM_CH1;
+    }
+}
 
+/* =========================================================
+   High-level PWM API (dùng ở mixer / output)
+   ========================================================= */
+void PWM_Write(pwm_channel_t ch, uint16_t us)
+{
+    PWM_SetMicroseconds(pwm_map(ch), us);
+}
+
+/* =========================================================
+   Init PWM (start timer channels)
+   ========================================================= */
+void PWM_Init(void)
+{
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+
+    /* Safe default */
+    PWM_DisarmESC();
+    PWM_Write(PWM_SERVO_L, 1500);
+    PWM_Write(PWM_SERVO_R, 1500);
+}
+
+/* =========================================================
+   ESC helpers
+   ========================================================= */
 void PWM_ArmESC(void)
 {
-    /* ESC arm bằng tín hiệu thấp ổn định */
-    PWM_SetMicroseconds(PWM_CH1, ESC_ARM_US);
+    PWM_Write(PWM_ESC, 1000);
 }
 
 void PWM_DisarmESC(void)
 {
-    PWM_SetMicroseconds(PWM_CH1, ESC_DISARM_US);
+    PWM_Write(PWM_ESC, 900);
 }

@@ -1,4 +1,4 @@
 #pragma once
+#include <stdint.h>
 
-void output_init(void);
-void output_update(void);
+void outputUpdate(uint16_t esc, uint16_t servoL, uint16_t servoR);

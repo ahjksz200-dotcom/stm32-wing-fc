@@ -1,6 +1,10 @@
 #pragma once
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     int16_t roll;
     int16_t pitch;
@@ -8,10 +12,6 @@ typedef struct {
     uint16_t throttle;
     uint8_t arm;
 } rc_data_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void RC_Init(void);
 uint8_t RC_Read(rc_data_t *out);

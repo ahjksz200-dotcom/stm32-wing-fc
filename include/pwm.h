@@ -1,9 +1,14 @@
 #pragma once
-#include <stdint.h>
+#include "stm32f4xx_hal.h"
 
-#define PWM_MIN_US 1000
-#define PWM_MAX_US 2000
-#define PWM_MID_US 1500
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void pwmInit(void);
-void pwmWrite(uint8_t ch, uint16_t us);
+void PWM_Init(void);
+void PWM_ArmESC(void);
+void PWM_DisarmESC(void);
+
+#ifdef __cplusplus
+}
+#endif

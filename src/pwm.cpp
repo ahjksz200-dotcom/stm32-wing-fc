@@ -1,87 +1,75 @@
 #include "pwm.h"
 #include "stm32f4xx_hal.h"
 
-/* =========================================================
-   Timer handle
-   → PHẢI được define ở timer_pwm.cpp hoặc main.c
-   ========================================================= */
-extern TIM_HandleTypeDef htim3;
+static TIM_HandleTypeDef htim3;  // Tạo handle cho timer
 
-/* =========================================================
-   Low-level PWM write (timer channel)
-   ========================================================= */
-void PWM_SetMicroseconds(pwm_ch_t ch, uint16_t us)
-{
-    if (us < 900)  us = 900;
-    if (us > 2100) us = 2100;
-
-    switch (ch)
-    {
-        case PWM_CH1:
-            __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, us);
-            break;
-        case PWM_CH2:
-            __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, us);
-            break;
-        case PWM_CH3:
-            __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, us);
-            break;
-        case PWM_CH4:
-            __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, us);
-            break;
-        default:
-            break;
-    }
-}
-
-/* =========================================================
-   Logical channel → timer channel mapping
-   ========================================================= */
-static pwm_ch_t pwm_map(pwm_channel_t ch)
-{
-    switch (ch)
-    {
-        case PWM_ESC:     return PWM_CH1;
-        case PWM_SERVO_L: return PWM_CH2;
-        case PWM_SERVO_R: return PWM_CH3;
-        case PWM_AUX1:    return PWM_CH4;
-        default:          return PWM_CH1;
-    }
-}
-
-/* =========================================================
-   High-level PWM API (dùng ở mixer / output)
-   ========================================================= */
-void PWM_Write(pwm_channel_t ch, uint16_t us)
-{
-    PWM_SetMicroseconds(pwm_map(ch), us);
-}
-
-/* =========================================================
-   Init PWM (start timer channels)
-   ========================================================= */
 void PWM_Init(void)
 {
+    __HAL_RCC_TIM3_CLK_ENABLE();  // Kích hoạt clock cho TIM3
+
+    htim3.Instance = TIM3;         // Sử dụng TIM3
+    htim3.Init.Prescaler = 84 - 1; // Prescaler cho 1 MHz (84MHz/84)
+    htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim3.Init.Period = 20000 - 1; // Period cho PWM (50Hz)
+    htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim3.Init.RepetitionCounter = 0;
+    
+    if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+    {
+        // Handle error
+    }
+
+    // Configure PWM channels
+    TIM_OC_InitTypeDef sConfigOC = {0};
+    sConfigOC.OCMode = TIM_OCMODE_PWM1;
+    sConfigOC.Pulse = 1500;  // Giá trị trung tâm cho ESC/Servo (1500us)
+
+    // PWM ESC on Channel 1
+    HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1);
+    // PWM Servo Left on Channel 2
+    HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2);
+    // PWM Servo Right on Channel 3
+    HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3);
+    // PWM AUX1 on Channel 4
+    HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_4);
+
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-
-    /* Safe default */
-    PWM_DisarmESC();
-    PWM_Write(PWM_SERVO_L, 1500);
-    PWM_Write(PWM_SERVO_R, 1500);
 }
 
-/* =========================================================
-   ESC helpers
-   ========================================================= */
+void PWM_Write(pwm_channel_t ch, uint16_t us)
+{
+    uint32_t pulse = us * (htim3.Init.Prescaler + 1);  // Tính giá trị pulse tương ứng với thời gian PWM
+
+    switch (ch)
+    {
+    case PWM_ESC:
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse);
+        break;
+    case PWM_SERVO_L:
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
+        break;
+    case PWM_SERVO_R:
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, pulse);
+        break;
+    case PWM_AUX1:
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, pulse);
+        break;
+    default:
+        break;
+    }
+}
+
 void PWM_ArmESC(void)
 {
-    PWM_Write(PWM_ESC, 1000);
+    // Cài đặt PWM cho ESC (1500us là throttle thấp)
+    PWM_Write(PWM_ESC, 1500);
 }
 
 void PWM_DisarmESC(void)
 {
-    PWM_Write(PWM_ESC, 900);
+    // Cài đặt PWM cho ESC (1000us là throttle thấp)
+    PWM_Write(PWM_ESC, 1000);
 }

@@ -1,7 +1,7 @@
 #include "fc.h"
 #include "imu.h"
 #include "pid.h"
-#include "rc.h"
+#include "rc_mbus.h"
 #include "pwm.h"
 #include "failsafe.h"
 #include "mixer.h"
@@ -15,14 +15,13 @@ static uint8_t armed = 0;
 void FC_Init(void)
 {
     IMU_Init();
-    RC_Init();
     PWM_Init();
     PWM_DisarmESC();
+    RC_Init();
 }
 
 void FC_Loop(void)
 {
-    /* ===== READ RC ===== */
     if (!RC_Read(&rc)) {
         failsafe_trigger();
         PWM_DisarmESC();
@@ -36,11 +35,9 @@ void FC_Loop(void)
         return;
     }
 
-    /* ===== IMU + PID ===== */
     IMU_Update(&imu);
     PID_Update(&imu, &rc, &pid_out);
 
-    /* ===== ARM / DISARM ===== */
     if (rc.arm && !armed) {
         PWM_ArmESC();
         armed = 1;
@@ -51,7 +48,6 @@ void FC_Loop(void)
         armed = 0;
     }
 
-    /* ===== MIXER ===== */
     if (armed) {
         mixer_elevon(&pid_out, rc.throttle);
     }

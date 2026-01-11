@@ -22,6 +22,7 @@ typedef enum
 /* API */
 void PWM_Init(void);
 void PWM_Write(pwm_channel_t ch, uint16_t us);
+void PWM_SetMicroseconds(pwm_ch_t ch, uint16_t us);
 
 void PWM_ArmESC(void);
 void PWM_DisarmESC(void);

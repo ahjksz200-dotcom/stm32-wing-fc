@@ -1,14 +1,21 @@
 #pragma once
 #include <stdint.h>
-#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
-    float roll;
-    float pitch;
-    float yaw;
-    float throttle;
-    bool  failsafe;
-} rc_input_t;
+    int16_t roll;
+    int16_t pitch;
+    int16_t yaw;
+    int16_t throttle;
+    uint8_t arm;
+} rc_data_t;
 
 void RC_Init(void);
-bool RC_Read(rc_input_t *rc);
+uint8_t RC_Read(rc_data_t *out);
+
+#ifdef __cplusplus
+}
+#endif

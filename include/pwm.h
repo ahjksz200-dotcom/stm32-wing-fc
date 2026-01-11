@@ -13,4 +13,8 @@ typedef enum {
 void PWM_Init(void);
 void PWM_SetMicroseconds(pwm_ch_t ch, uint16_t us);
 
+/* ESC control */
+void PWM_ArmESC(void);
+void PWM_DisarmESC(void);
+
 #endif

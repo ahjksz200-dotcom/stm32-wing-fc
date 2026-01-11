@@ -1,26 +1,26 @@
 #include "fc.h"
-
-#include "rc_mbus.h"
 #include "imu.h"
 #include "pid.h"
+#include "rc_mbus.h"
 #include "pwm.h"
 #include "failsafe.h"
 #include "mixer.h"
+
+static imu_data_t imu;
+static rc_data_t rc;
+static pid_output_t pid_out;
 
 static uint8_t armed = 0;
 
 void FC_Init(void)
 {
-    RC_Init();
     IMU_Init();
-    PID_Init();
     PWM_Init();
+    RC_Init();
 }
 
 void FC_Loop(void)
 {
-    rc_data_t rc;
-
     if (!RC_Read(&rc)) {
         failsafe_trigger();
         return;
@@ -32,6 +32,10 @@ void FC_Loop(void)
         return;
     }
 
+    IMU_Update(&imu);
+
+    PID_Update(&imu, &rc, &pid_out);
+
     if (rc.arm && !armed) {
         PWM_ArmESC();
         armed = 1;
@@ -42,10 +46,7 @@ void FC_Loop(void)
         armed = 0;
     }
 
-    if (!armed) return;
-
-    IMU_Update();
-    PID_Update(rc.roll, rc.pitch);
-
-    mix_elevon(rc.roll, rc.pitch);
+    if (armed) {
+        mixer_elevon(&pid_out, rc.throttle);
+    }
 }

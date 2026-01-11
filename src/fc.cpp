@@ -6,7 +6,6 @@
 #include "failsafe.h"
 #include "mixer.h"
 
-
 static imu_data_t imu;
 static rc_data_t rc;
 static pid_output_t pid_out;

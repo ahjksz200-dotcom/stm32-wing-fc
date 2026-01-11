@@ -1,5 +1,5 @@
 #pragma once
-#include "stm32f4xx_hal.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -7,6 +7,7 @@ extern "C" {
 
 void failsafe_trigger(void);
 uint8_t failsafe_active(void);
+void failsafe_clear(void);
 
 #ifdef __cplusplus
 }

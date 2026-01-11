@@ -1,11 +1,11 @@
 #pragma once
-#include "stm32f4xx_hal.h"
+#include "pid.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void mix_elevon(int16_t roll, int16_t pitch);
+void mixer_elevon(const pid_output_t *pid, uint16_t throttle);
 
 #ifdef __cplusplus
 }

@@ -1,18 +1,17 @@
-#include "output.h"
 #include "pwm.h"
 
-uint16_t esc = 1000;
-uint16_t servoL = 1500;
-uint16_t servoR = 1500;
+extern uint16_t esc;
+extern uint16_t servoL;
+extern uint16_t servoR;
 
-void outputInit()
+void outputInit(void)
 {
-    pwmInit();
+    PWM_Init();
 }
 
-void outputUpdate()
+void outputUpdate(void)
 {
-    pwmWrite(0, esc);
-    pwmWrite(1, servoL);
-    pwmWrite(2, servoR);
+    PWM_SetMicroseconds(PWM_CH1, esc);
+    PWM_SetMicroseconds(PWM_CH2, servoL);
+    PWM_SetMicroseconds(PWM_CH3, servoR);
 }

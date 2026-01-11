@@ -1,7 +1,18 @@
 #include "failsafe.h"
 
-static bool fs = false;
+static uint8_t fs_active = 0;
 
-void FAILSAFE_Init(void) { fs = false; }
-void FAILSAFE_Trigger(void) { fs = true; }
-bool FAILSAFE_IsActive(void) { return fs; }
+void failsafe_trigger(void)
+{
+    fs_active = 1;
+}
+
+uint8_t failsafe_active(void)
+{
+    return fs_active;
+}
+
+void failsafe_clear(void)
+{
+    fs_active = 0;
+}

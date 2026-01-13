@@ -21,22 +21,28 @@ static uint8_t armed = 0;
 
 void FC_Init(void)
 {
+    /* IMU (có thể để trống) */
     IMU_Init();
+
+    /* PWM TIMER THẬT */
     PWM_Init();
+    PWM_DisarmESC();
 
-    PWM_DisarmESC();   // an toàn khi boot
+    /* MBUS qua UART */
+    RC_Init();
 
-    RC_Init();         // MBUS init
-    failsafe_init();
+    /* Failsafe */
+    failsafe_clear();
 }
 
 /* ================== LOOP ================== */
 
 void FC_Loop(void)
 {
-    /* -------- RC -------- */
+    /* -------- RC (MBUS UART) -------- */
     if (!RC_Read(&rc))
     {
+        /* Không có frame mới */
         failsafe_trigger();
     }
 
@@ -48,7 +54,6 @@ void FC_Loop(void)
     }
 
     /* -------- ARM / DISARM --------
-       Điều kiện chuẩn RC:
        throttle < 1050
        yaw phải  -> ARM
        yaw trái  -> DISARM
@@ -70,17 +75,16 @@ void FC_Loop(void)
     /* -------- IMU -------- */
     IMU_Update(&imu);
 
-    /* -------- PID (hiện để pass-through) -------- */
+    /* -------- PID -------- */
     PID_Update(&imu, &rc, &pid_out);
 
-    /* -------- OUTPUT -------- */
+    /* -------- OUTPUT (PWM thật) -------- */
     if (armed)
     {
         mixer_elevon(&pid_out, rc.throttle);
     }
     else
     {
-        /* disarmed → giữ ESC an toàn */
         PWM_Write(PWM_ESC, 1000);
         PWM_Write(PWM_SERVO_L, 1500);
         PWM_Write(PWM_SERVO_R, 1500);

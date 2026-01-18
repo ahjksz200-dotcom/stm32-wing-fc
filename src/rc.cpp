@@ -3,22 +3,10 @@
 
 void RC_Init(void)
 {
-    MBUS_Init();
+    RC_MBUS_Init();
 }
 
-uint8_t RC_Read(rc_data_t *rc)
+void RC_Read(void)
 {
-    uint16_t ch[MBUS_CHANNELS];
-
-    if (!MBUS_ReadRaw(ch))
-        return 0;
-
-    rc->roll     = ch[0];
-    rc->pitch    = ch[1];
-    rc->throttle = ch[2];
-    rc->yaw      = ch[3];
-
-    rc->arm = (ch[4] > 1500);   // switch arm
-
-    return 1;
+    RC_MBUS_Read();
 }

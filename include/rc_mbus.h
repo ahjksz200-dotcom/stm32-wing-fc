@@ -1,17 +1,9 @@
 #pragma once
 #include <stdint.h>
-#include <stdbool.h>
 
-#define MBUS_CHANNELS   16
-#define MBUS_FRAME_LEN  25   // SBUS/MBUS chuẩn
+#define RC_CHANNELS 14
 
-typedef struct
-{
-    uint16_t ch[MBUS_CHANNELS];
-    bool failsafe;
-} mbus_t;
+extern uint16_t rc_channels[RC_CHANNELS];
 
-/* API */
-void MBUS_Init(void);
-uint8_t MBUS_ReadRaw(uint16_t *channels);
-bool MBUS_Failsafe(void);
+void RC_MBUS_Init(void);
+void RC_MBUS_Read(void);

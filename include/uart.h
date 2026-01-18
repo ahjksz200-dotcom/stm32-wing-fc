@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
+#include "stm32f4xx_hal.h"
 
-void UART_Init_MBUS(void);
-uint8_t UART_ReadByte_MBUS(uint8_t *byte);
+extern UART_HandleTypeDef huart1;

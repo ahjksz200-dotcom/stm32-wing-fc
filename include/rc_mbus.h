@@ -1,9 +1,17 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 
-#define RC_CHANNELS 14
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern uint16_t rc_channels[RC_CHANNELS];
+#define MBUS_CHANNELS 16
 
-void RC_MBUS_Init(void);
-void RC_MBUS_Read(void);
+void MBUS_Init(void);
+uint8_t MBUS_ReadRaw(uint16_t *ch);
+bool MBUS_Failsafe(void);
+
+#ifdef __cplusplus
+}
+#endif
